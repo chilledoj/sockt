@@ -63,7 +63,15 @@ func (r *Room[RoomID, ConnectionID]) SetStatus(status RoomStatus) {
 	r.status = status
 }
 
-func (r *Room[RoomID, ConnectionID]) AddConnection(conn Socket, connId ConnectionID) {
+func (r *Room[RoomID, ConnectionID]) AddConnection(conn Socket, connId ConnectionID) error {
+
+	validator, ok := r.processor.(ConnectionValidator[ConnectionID])
+	if ok {
+		if err := validator.CanJoin(connId); err != nil {
+			return err
+		}
+	}
+
 	newConn := newSocketConnection[ConnectionID](r.ctx, conn, connId)
 
 	r.mu.Lock()
@@ -78,6 +86,7 @@ func (r *Room[RoomID, ConnectionID]) AddConnection(conn Socket, connId Connectio
 		Subject: connId,
 	})
 
+	return nil
 }
 
 func (r *Room[RoomID, ConnectionID]) RemoveConnection(connId ConnectionID) {
@@ -136,7 +145,9 @@ loop:
 				continue loop
 			}
 			r.mu.RUnlock()
-			conn.Send(SocketMessageBinary, msg.Data)
+			if err := conn.Send(SocketMessageBinary, msg.Data); err != nil {
+				fmt.Printf("write loop: error sending message: %v\n", err)
+			}
 		case <-r.ctx.Done():
 			break loop
 		}

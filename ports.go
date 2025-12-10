@@ -12,6 +12,10 @@ type EventProcessor[ConnectionID comparable] interface {
 	Process(msg Event[ConnectionID])
 }
 
+type ConnectionValidator[ConnectionID comparable] interface {
+	CanJoin(connId ConnectionID) error
+}
+
 type Socket interface {
 	Read(context.Context) ([]byte, error)
 	Write(SocketMessageType, []byte) error
