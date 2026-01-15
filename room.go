@@ -135,7 +135,6 @@ loop:
 	for {
 		select {
 		case msg := <-r.sendChan:
-			r.lg.Printf("write loop got msg: %v\n", msg)
 			// send
 			r.mu.RLock()
 			conn, ok := r.connections[msg.Subject]
