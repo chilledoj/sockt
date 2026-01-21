@@ -72,6 +72,37 @@ func (r *Room[RoomID, ConnectionID]) SetStatus(status RoomStatus) {
 	r.status = status
 }
 
+func (r *Room[RoomID, ConnectionID]) ConnectionCount() int {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return len(r.connections)
+}
+
+func (r *Room[RoomID, ConnectionID]) SendTo(msg Event[ConnectionID], connId ConnectionID) {
+	r.mu.RLock()
+	conn, ok := r.connections[connId]
+	r.mu.RUnlock()
+
+	if !ok {
+		r.lg.Printf("SendTo: connection not found for id: %v\n", connId)
+		return
+	}
+	if err := conn.Send(SocketMessageBinary, msg.Data); err != nil {
+		r.lg.Printf("SendTo: error sending message to %v: %v\n", connId, err)
+	}
+}
+
+func (r *Room[RoomID, ConnectionID]) SendToAll(msg Event[ConnectionID]) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for connId, conn := range r.connections {
+		if err := conn.Send(SocketMessageBinary, msg.Data); err != nil {
+			r.lg.Printf("SendToAll: error sending message to %v: %v\n", connId, err)
+		}
+	}
+}
+
 func (r *Room[RoomID, ConnectionID]) AddConnection(conn Socket, connId ConnectionID) error {
 
 	validator, ok := r.processor.(ConnectionValidator[ConnectionID])
@@ -81,7 +112,7 @@ func (r *Room[RoomID, ConnectionID]) AddConnection(conn Socket, connId Connectio
 		}
 	}
 
-	newConn := newSocketConnection[ConnectionID](r.ctx, conn, connId)
+	newConn := newSocketConnection(r.ctx, conn, connId)
 
 	r.mu.Lock()
 	r.connections[connId] = newConn

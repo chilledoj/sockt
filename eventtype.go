@@ -9,8 +9,14 @@ const (
 )
 
 func (e EventType) String() string {
-	if e < 1 || e > 3 {
+	switch e {
+	case EventConnect:
+		return "connect"
+	case EventMessage:
+		return "message"
+	case EventDisconnect:
+		return "disconnect"
+	default:
 		return "unknown"
 	}
-	return [...]string{"connect", "message", "disconnect"}[e-1]
 }

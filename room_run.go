@@ -22,14 +22,7 @@ func (r *Room[RoomID, ConnectionID]) Stop() {
 
 func (r *Room[RoomID, ConnectionID]) Run() {
 	r.lg.Println("run started")
-loop:
-	for {
-		select {
-		// TODO: OTHER STUFF COULD BE DONE HERE.
-		case <-r.ctx.Done():
-			break loop
-		}
-	}
+	// TODO: OTHER STUFF COULD BE DONE HERE.
+	<-r.ctx.Done()
 	r.lg.Println("run finished")
-
 }
