@@ -40,8 +40,9 @@ func (c *SocketConnection[ConnectionID]) Context() context.Context {
 	return c.ctx
 }
 
-func (c *SocketConnection[ConnectionID]) Close() {
+func (c *SocketConnection[ConnectionID]) Close() error {
 	c.cancel()
+	return c.conn.Close()
 }
 
 func (c *SocketConnection[ConnectionID]) Conn() Socket {
